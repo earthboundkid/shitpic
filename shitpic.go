@@ -5,12 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"image/gif"
 	"image/jpeg"
 	"io"
 	"math/rand"
 	"os"
 
-	_ "image/gif" // register extra decoders for flexible input
 	_ "image/png"
 )
 
@@ -21,6 +21,15 @@ func recompress(in io.Reader, out io.Writer, quality int) error {
 	}
 
 	return jpeg.Encode(out, img, &jpeg.Options{Quality: quality})
+}
+
+func gifize(in io.Reader, out io.Writer) error {
+	img, _, err := image.Decode(in)
+	if err != nil {
+		return err
+	}
+
+	return gif.Encode(out, img, nil)
 }
 
 func uglify(in io.Reader, cycles, lowerBound int) (io.Reader, error) {
@@ -64,6 +73,7 @@ func main() {
 
 	cycles := flag.Uint("cycles", 100, "How many times to reprocess input")
 	lowerBound := flag.Int("quality", 75, "Lower bound of quality (0–100)")
+	reduceColor := flag.Bool("reduce-colors", false, "Reduce to 256 colors")
 
 	flag.Parse()
 
@@ -77,12 +87,18 @@ func main() {
 		os.Exit(2)
 	}
 
-	var inf = os.Stdin
+	var inf io.Reader = os.Stdin
 	if flag.Arg(0) != "-" {
 		f, err := os.Open(flag.Arg(0))
 		die(err)
 		defer f.Close()
 		inf = f
+	}
+
+	if *reduceColor {
+		var buf bytes.Buffer
+		die(gifize(inf, &buf))
+		inf = &buf
 	}
 
 	out, err := uglify(inf, int(*cycles), *lowerBound)

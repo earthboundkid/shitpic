@@ -19,9 +19,14 @@ First install [Go](http://golang.org) and set your `GOPATH` environmental variab
 ```bash
 $ shitpic -h
 Usage of shitpic:
-	shitpic [options] input output
+    shitpic [options] input output
+
+Shitpic accepts and can output JPEG, GIF, and PNG files.
+
   -cycles uint
-    	How many times to reprocess input (default 100)
+        How many times to reprocess input (default 100)
   -quality int
-    	Lower bound of quality (0–100) (default 75)
+        Lower bound of quality (0–100) (default 75)
+  -reduce-colors
+        Reduce to 256 colors
 ```

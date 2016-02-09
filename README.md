@@ -14,3 +14,14 @@ Output:
 
 ## Installation
 First install [Go](http://golang.org) and set your `GOPATH` environmental variable to the directory you would like the project saved in. Then run `go get github.com/carlmjohnson/shitpic`. The binary will be installed in `$GOPATH/bin`. If you don't want to keep the source, you can instead run `GOPATH=/tmp/sp go get github.com/carlmjohnson/shitpic && cp /tmp/sp/bin/shitpic .` to install the binary to your current working directory.
+
+## Usage
+```bash
+$ shitpic -h
+Usage of shitpic:
+	shitpic [options] input output
+  -cycles uint
+    	How many times to reprocess input (default 100)
+  -quality int
+    	Lower bound of quality (0–100) (default 75)
+```

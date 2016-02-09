@@ -1,4 +1,4 @@
-# shitpic
+# shitpic [![GoDoc](https://godoc.org/github.com/carlmjohnson/shitpic?status.svg)](https://godoc.org/github.com/carlmjohnson/shitpic)
 As explained in [The Awl](http://www.theawl.com/2014/12/the-triumphant-rise-of-the-shitpic), a **shitpic** happens, “when an image is put through some diabolical combination of uploading, screencapping, filtering, cropping, and reuploading. They are particularly popular on Instagram.”
 
 `shitpic` is a utility for creating shitpics. It recompresses an input file a number of times (default 100) and saves the degraded output.

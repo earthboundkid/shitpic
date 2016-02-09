@@ -26,9 +26,9 @@ func recompress(in io.Reader, out io.Writer, quality int) error {
 func uglify(in io.Reader, cycles, lowerBound int) (io.Reader, error) {
 	randRange := 100 - lowerBound
 
-	var buf, temp bytes.Buffer
+	var rbuf, wbuf bytes.Buffer
 
-	_, err := io.Copy(&buf, in)
+	_, err := io.Copy(&rbuf, in)
 	if err != nil {
 		return nil, err
 	}
@@ -37,15 +37,15 @@ func uglify(in io.Reader, cycles, lowerBound int) (io.Reader, error) {
 		fmt.Fprint(os.Stderr, ".")
 
 		quality := lowerBound + rand.Intn(randRange)
-		if err = recompress(&buf, &temp, quality); err != nil {
+		if err = recompress(&rbuf, &wbuf, quality); err != nil {
 			return nil, err
 		}
 		// Prevent allocations by reseting and swapping
-		buf.Reset()
-		buf, temp = temp, buf
+		rbuf.Reset()
+		rbuf, wbuf = wbuf, rbuf
 	}
 	fmt.Fprintln(os.Stderr)
-	return &buf, nil
+	return &rbuf, nil
 }
 
 func die(err error) {

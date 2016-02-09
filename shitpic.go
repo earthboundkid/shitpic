@@ -7,11 +7,11 @@ import (
 	"image"
 	"image/gif"
 	"image/jpeg"
+	"image/png"
 	"io"
 	"math/rand"
 	"os"
-
-	_ "image/png"
+	"strings"
 )
 
 func recompress(in io.Reader, out io.Writer, quality int) error {
@@ -30,6 +30,15 @@ func gifize(in io.Reader, out io.Writer) error {
 	}
 
 	return gif.Encode(out, img, nil)
+}
+
+func pngerate(in io.Reader, out io.Writer) error {
+	img, _, err := image.Decode(in)
+	if err != nil {
+		return err
+	}
+
+	return png.Encode(out, img)
 }
 
 func uglify(in io.Reader, cycles, lowerBound int) (io.Reader, error) {
@@ -66,8 +75,12 @@ func die(err error) {
 
 func main() {
 	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, "Usage of shitpic:")
-		fmt.Fprintln(os.Stderr, "\tshitpic [options] input output")
+		usage := `Usage of shitpic:
+	shitpic [options] input output
+
+Shitpic accepts and can output JPEG, GIF, and PNG files.
+`
+		fmt.Fprintln(os.Stderr, usage)
 		flag.PrintDefaults()
 	}
 
@@ -82,36 +95,52 @@ func main() {
 		os.Exit(2)
 	}
 
+	infilename := flag.Arg(0)
+	outfilename := flag.Arg(1)
+
 	if *lowerBound < 0 || *lowerBound > 100 {
 		flag.Usage()
 		os.Exit(2)
 	}
 
-	var inf io.Reader = os.Stdin
-	if flag.Arg(0) != "-" {
-		f, err := os.Open(flag.Arg(0))
+	var r io.Reader = os.Stdin
+	if infilename != "-" {
+		f, err := os.Open(infilename)
 		die(err)
 		defer f.Close()
-		inf = f
+		r = f
 	}
 
 	if *reduceColor {
 		var buf bytes.Buffer
-		die(gifize(inf, &buf))
-		inf = &buf
+		die(gifize(r, &buf))
+		r = &buf
 	}
 
-	out, err := uglify(inf, int(*cycles), *lowerBound)
+	var err error
+	r, err = uglify(r, int(*cycles), *lowerBound)
 	die(err)
 
+	if strings.HasSuffix(outfilename, ".png") {
+		var buf bytes.Buffer
+		die(pngerate(r, &buf))
+		r = &buf
+	}
+
+	if strings.HasSuffix(outfilename, ".gif") {
+		var buf bytes.Buffer
+		die(gifize(r, &buf))
+		r = &buf
+	}
+
 	var outf = os.Stdout
-	if flag.Arg(1) != "-" {
-		f, err := os.Create(flag.Arg(1))
+	if outfilename != "-" {
+		f, err := os.Create(outfilename)
 		die(err)
 		defer f.Close()
 		outf = f
 	}
 
-	_, err = io.Copy(outf, out)
+	_, err = io.Copy(outf, r)
 	die(err)
 }

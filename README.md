@@ -13,7 +13,13 @@ Output:
 ![Dirty monkey](http://i.imgur.com/pdgFU2d.jpg)
 
 ## Installation
-First install [Go](http://golang.org) and set your `GOPATH` environmental variable to the directory you would like the project saved in. Then run `go get github.com/carlmjohnson/shitpic`. The binary will be installed in `$GOPATH/bin`. If you don't want to keep the source, you can instead run `GOPATH=/tmp/sp go get github.com/carlmjohnson/shitpic && cp /tmp/sp/bin/shitpic .` to install the binary to your current working directory.
+First install [Go](http://golang.org).
+
+If you just want to install the binary to your current directory, and don't care about the source code, run
+
+```bash
+GOBIN=. GOPATH=/tmp/gobuild go get github.com/carlmjohnson/shitpic
+```
 
 ## Usage
 ```bash

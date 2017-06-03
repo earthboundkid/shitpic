@@ -3,7 +3,7 @@ As explained in [The Awl](http://www.theawl.com/2014/12/the-triumphant-rise-of-t
 
 `shitpic` is a utility for creating shitpics. It recompresses an input file a number of times (default 100) and saves the degraded output.
 
-##Example
+## Example
 Input:
 
 ![Clean monkey](http://i.imgur.com/ULOm0le.png)

@@ -60,3 +60,9 @@ func await(awaitable js.Value) chan []js.Value {
 		}))
 	return ch
 }
+
+func bytesToValue(b []byte) js.Value {
+	v := array.New(js.ValueOf(len(b)))
+	js.CopyBytesToJS(v, b)
+	return v
+}

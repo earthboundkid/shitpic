@@ -8,7 +8,6 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"syscall/js"
@@ -27,13 +26,14 @@ var wrapUglify = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 		panic("bad read")
 	}
 
-	p, set, _ := newPromise()
+	p, set, reject := newPromise()
 	go func() {
-		r, _ := uglify(b, 10*time.Second, 10)
-		b, _ = ioutil.ReadAll(r)
-		v := array.New(js.ValueOf(len(b)))
-		js.CopyBytesToJS(v, b)
-		set(v)
+		b, err := uglify(b, 10*time.Second, 10)
+		if err != nil {
+			reject(js.ValueOf(err.Error()))
+			return
+		}
+		set(bytesToValue(b))
 	}()
 	return p
 })
@@ -65,7 +65,7 @@ func pngerate(in io.Reader, out io.Writer) error {
 	return png.Encode(out, img)
 }
 
-func uglify(in []byte, d time.Duration, lowerBound int) (io.Reader, error) {
+func uglify(in []byte, d time.Duration, lowerBound int) ([]byte, error) {
 	randRange := 100 - lowerBound
 
 	var rbuf, wbuf bytes.Buffer
@@ -85,6 +85,5 @@ func uglify(in []byte, d time.Duration, lowerBound int) (io.Reader, error) {
 		rbuf.Reset()
 		rbuf, wbuf = wbuf, rbuf
 	}
-	fmt.Fprintln(os.Stderr)
-	return &rbuf, nil
+	return rbuf.Bytes(), nil
 }

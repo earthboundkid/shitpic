@@ -29,11 +29,8 @@ var wrapUglify = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 
 	p, set, _ := newPromise()
 	go func() {
-		time.Sleep(1 * time.Second)
-		buf := bytes.NewReader(b)
-		r, _ := uglify(buf, 10*time.Second, 10)
-		b, _ := ioutil.ReadAll(r)
-		_ = b
+		r, _ := uglify(b, 10*time.Second, 10)
+		b, _ = ioutil.ReadAll(r)
 		v := array.New(js.ValueOf(len(b)))
 		js.CopyBytesToJS(v, b)
 		set(v)
@@ -68,12 +65,11 @@ func pngerate(in io.Reader, out io.Writer) error {
 	return png.Encode(out, img)
 }
 
-func uglify(in io.Reader, d time.Duration, lowerBound int) (io.Reader, error) {
+func uglify(in []byte, d time.Duration, lowerBound int) (io.Reader, error) {
 	randRange := 100 - lowerBound
 
 	var rbuf, wbuf bytes.Buffer
-
-	_, err := io.Copy(&rbuf, in)
+	_, err := rbuf.Write(in)
 	if err != nil {
 		return nil, err
 	}

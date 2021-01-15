@@ -1,0 +1,29 @@
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <script src="wasm_exec.js"></script>
+    <script>
+      const go = new Go();
+      WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+        go.run(result.instance);
+      });
+    </script>
+  </head>
+  <body>
+    <input type="file">
+    <img src="">
+    <script>
+      document.querySelector("input").addEventListener("change", async e=>{
+        console.log("starting")
+        let file = e.currentTarget.files[0]
+        let a = await file.arrayBuffer()
+        let b = new Uint8Array(a)
+        let r = await uglify(b)
+        window.r = r
+        document.querySelector("img").src = URL.createObjectURL(
+          new Blob([r.buffer], { type: 'image/jpeg' })
+        );
+      })
+    </script>
+  </body>
+</html>

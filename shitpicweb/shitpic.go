@@ -16,20 +16,15 @@ func init() {
 	js.Global().Set("uglify", wrapUglify)
 }
 
-var wrapUglify = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+var wrapUglify = goPromise(func(args []js.Value) (js.Value, bool) {
 	bufV := args[0]
 	b := valueToBytes(bufV)
 
-	p, set, reject := newPromise()
-	go func() {
-		b, err := uglify(b, 10*time.Second, 10)
-		if err != nil {
-			reject(js.ValueOf(err.Error()))
-			return
-		}
-		set(bytesToValue(b))
-	}()
-	return p
+	b, err := uglify(b, 10*time.Second, 10)
+	if err != nil {
+		return js.ValueOf(err.Error()), false
+	}
+	return bytesToValue(b), true
 })
 
 func recompress(in io.Reader, out io.Writer, quality int) error {

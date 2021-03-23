@@ -46,6 +46,21 @@ func newPromise() (p js.Value, set, throw func(js.Value)) {
 	return
 }
 
+func goPromise(cb func(args []js.Value) (ret js.Value, ok bool)) js.Value {
+	f := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+		p, set, reject := newPromise()
+		go func() {
+			if ret, ok := cb(args); ok {
+				set(ret)
+			} else {
+				reject(ret)
+			}
+		}()
+		return p
+	})
+	return f.Value
+}
+
 func await(awaitable js.Value) (ret js.Value, ok bool) {
 	ch := make(chan struct{})
 	go func() {

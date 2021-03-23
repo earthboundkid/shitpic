@@ -46,18 +46,25 @@ func newPromise() (p js.Value, set, throw func(js.Value)) {
 	return
 }
 
-func await(awaitable js.Value) chan []js.Value {
-	ch := make(chan []js.Value)
-	awaitable.
-		Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			ch <- args
-			return nil
-		})).
-		Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-			ch <- args
-			return nil
-		}))
-	return ch
+func await(awaitable js.Value) (ret js.Value, ok bool) {
+	ch := make(chan struct{})
+	go func() {
+		awaitable.
+			Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+				ret = args[0]
+				ok = true
+				close(ch)
+				return nil
+			})).
+			Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+				ret = args[0]
+				ok = false
+				close(ch)
+				return nil
+			}))
+	}()
+	<-ch
+	return
 }
 
 func bytesToValue(b []byte) js.Value {

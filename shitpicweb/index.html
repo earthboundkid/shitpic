@@ -3,6 +3,12 @@
     <meta charset="utf-8"/>
     <script src="wasm_exec.js"></script>
     <script>
+      if (!WebAssembly.instantiateStreaming) { // polyfill
+        WebAssembly.instantiateStreaming = async (resp, importObject) => {
+          const source = await (await resp).arrayBuffer();
+          return await WebAssembly.instantiate(source, importObject);
+        };
+      }
       const go = new Go();
       WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
         go.run(result.instance);
@@ -11,18 +17,31 @@
   </head>
   <body>
     <input type="file">
-    <img src="">
+    <img src="" style="max-width: 50vw; max-height: 50vh">
     <script>
+      function downloadURI(uri, name) {
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        delete link;
+      }
+
       document.querySelector("input").addEventListener("change", async e=>{
-        console.log("starting")
         let file = e.currentTarget.files[0]
-        let a = await file.arrayBuffer()
-        let b = new Uint8Array(a)
-        let r = await uglify(b)
-        window.r = r
+        let buf = new Uint8Array(await file.arrayBuffer());
+        console.log("starting")
+        let start = new Date();
+        let result = await uglify(buf)
+        console.log("done", new Date() - start);
         document.querySelector("img").src = URL.createObjectURL(
-          new Blob([r.buffer], { type: 'image/jpeg' })
+          new Blob([result.buffer], { type: 'image/jpeg' })
         );
+      })
+      document.querySelector("img").addEventListener("click", e =>{
+        downloadURI(e.currentTarget.src, "shitpic.jpeg");
       })
     </script>
   </body>

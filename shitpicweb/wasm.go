@@ -10,7 +10,6 @@ func main() {
 }
 
 var (
-	fetch   = js.Global().Get("fetch")
 	promise = js.Global().Get("Promise")
 	array   = js.Global().Get("Uint8Array")
 )
@@ -65,4 +64,13 @@ func bytesToValue(b []byte) js.Value {
 	v := array.New(js.ValueOf(len(b)))
 	js.CopyBytesToJS(v, b)
 	return v
+}
+
+func valueToBytes(v js.Value) []byte {
+	size := v.Length()
+	b := make([]byte, size)
+	if n := js.CopyBytesToGo(b, v); n != size {
+		panic("bad read")
+	}
+	return b
 }

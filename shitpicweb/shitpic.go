@@ -2,14 +2,12 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
 	"math/rand"
-	"os"
 	"syscall/js"
 	"time"
 )
@@ -20,11 +18,7 @@ func init() {
 
 var wrapUglify = js.FuncOf(func(this js.Value, args []js.Value) interface{} {
 	bufV := args[0]
-	size := bufV.Length()
-	b := make([]byte, size)
-	if n := js.CopyBytesToGo(b, bufV); n != size {
-		panic("bad read")
-	}
+	b := valueToBytes(bufV)
 
 	p, set, reject := newPromise()
 	go func() {
@@ -75,8 +69,6 @@ func uglify(in []byte, d time.Duration, lowerBound int) ([]byte, error) {
 	}
 
 	for done := time.Now().Add(d); time.Now().Before(done); {
-		fmt.Fprint(os.Stderr, ".")
-
 		quality := lowerBound + rand.Intn(randRange)
 		if err = recompress(&rbuf, &wbuf, quality); err != nil {
 			return nil, err

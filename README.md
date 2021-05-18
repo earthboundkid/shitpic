@@ -36,3 +36,6 @@ Shitpic accepts and can output JPEG, GIF, and PNG files.
   -reduce-colors
         Reduce to 256 colors
 ```
+
+## Relevant XKCD
+![Who knew you could learn so much about sexual reproduction from looking at pictures on the internet!](https://imgs.xkcd.com/comics/mullers_ratchet.png)

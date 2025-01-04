@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/gif"
+	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
-	"io"
 	"iter"
+	"math"
 	"os"
 
 	"github.com/disintegration/gift"
@@ -29,7 +29,7 @@ func main() {
 	nameOut := flag.String("out", "output.png", "`path` to output file")
 	width := flag.Int("width", 160, "pixel width for dithering")
 	linearize := flag.Bool("linearize", false, "convert to linear color space")
-	floyd := flag.Bool("floyd", false, "use Flyod-Steinberg method instead of Atkinson")
+	mode := flag.String("mode", "atkinson", "dithering mode (atkinson, floyd, r2, r2-triangle)")
 	pct := flag.Int("factor", 100, "error diffusion multiplication `percentage`")
 	flag.Parse()
 
@@ -53,10 +53,19 @@ func main() {
 	}
 
 	// Dither using a linear palette
-	if *floyd {
-		drawFloyd(pallettedImg, resizedImg.Bounds(), resizedImg, factor)
-	} else {
+	switch *mode {
+	default:
+		fmt.Fprintf(os.Stderr, "unknown -mode: %s", *mode)
+		flag.Usage()
+		os.Exit(1)
+	case "atkinson":
 		drawAtkinson(pallettedImg, resizedImg.Bounds(), resizedImg, factor)
+	case "floyd":
+		drawFloyd(pallettedImg, resizedImg.Bounds(), resizedImg, factor)
+	case "r2":
+		drawNoisy(pallettedImg, resizedImg.Bounds(), resizedImg, factor, false)
+	case "r2-triangle":
+		drawNoisy(pallettedImg, resizedImg.Bounds(), resizedImg, factor, true)
 	}
 
 	// Swap palette back to sRGB if necessary
@@ -105,24 +114,6 @@ func die(err error) {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-}
-
-func gifize(in io.Reader, out io.Writer) error {
-	img, _, err := image.Decode(in)
-	if err != nil {
-		return err
-	}
-
-	return gif.Encode(out, img, nil)
-}
-
-func pngerate(in io.Reader, out io.Writer) error {
-	img, _, err := image.Decode(in)
-	if err != nil {
-		return err
-	}
-
-	return png.Encode(out, img)
 }
 
 func drawAtkinson(dst *image.Paletted, r image.Rectangle, src image.Image, diffusionFactor float64) {
@@ -361,4 +352,89 @@ func clamp(i int32) int32 {
 		return 0xffff
 	}
 	return i
+}
+
+// See https://extremelearning.com.au/unreasonable-effectiveness-of-quasirandom-sequences/
+var sqrt3 = math.Sqrt(3)
+var pr = math.Cosh(math.Acosh(sqrt3*1.5)/3) * 2 / sqrt3
+var a1 = 1.0 / pr
+var a2 = 1.0 / (pr * pr)
+
+func r2(x, y int) (float64, float64) {
+	return float64(x+1) * a1, float64(y+1) * a2
+}
+
+func r2intensity(x, y int) float64 {
+	v1, v2 := r2(x, y)
+	return math.Mod(v1+v2, 1)
+}
+
+// triangleWave given a number between 0 and 1, biases it toward 1
+func triangleWave(z float64) float64 {
+	if z < .5 {
+		return 2 * z
+	}
+	return 2 - 2*z
+}
+
+func r2noise(x, y int, errorFactor float64, triangle bool) int32 {
+	z := r2intensity(x, y)
+	if triangle {
+		z = triangleWave(z)
+	}
+	z = 0xffff*z - 0x7FFF
+	return int32(z * errorFactor)
+}
+
+func drawNoisy(dst *image.Paletted, r image.Rectangle, src image.Image, diffusionFactor float64, triangle bool) {
+	type diffusion struct {
+		r, g, b, a int32
+	}
+	palette := make([]diffusion, len(dst.Palette))
+	for i, col := range dst.Palette {
+		r, g, b, a := col.RGBA()
+		palette[i].r = int32(r)
+		palette[i].g = int32(g)
+		palette[i].b = int32(b)
+		palette[i].a = int32(a)
+	}
+	pix, stride := dst.Pix[dst.PixOffset(r.Min.X, r.Min.Y):], dst.Stride
+
+	pxRGBA := func(x, y int) (r, g, b, a uint32) { return src.At(x, y).RGBA() }
+	// Fast paths for special cases to avoid excessive use of the color.Color
+	// interface which escapes to the heap but need to be discovered for
+	// each pixel on r. See also https://golang.org/issues/15759.
+	switch src0 := src.(type) {
+	case *image.RGBA:
+		pxRGBA = func(x, y int) (r, g, b, a uint32) { return src0.RGBAAt(x, y).RGBA() }
+	case *image.NRGBA:
+		pxRGBA = func(x, y int) (r, g, b, a uint32) { return src0.NRGBAAt(x, y).RGBA() }
+	case *image.YCbCr:
+		pxRGBA = func(x, y int) (r, g, b, a uint32) { return src0.YCbCrAt(x, y).RGBA() }
+	}
+
+	for x, y := range tblr(r) {
+		sr, sg, sb, sa := pxRGBA(x, y)
+		var e diffusion
+		e.r, e.g, e.b, e.a = int32(sr), int32(sg), int32(sb), int32(sa)
+
+		e.r = clamp(e.r + r2noise(3*x+0, y, diffusionFactor, triangle))
+		e.g = clamp(e.g + r2noise(3*x+1, y, diffusionFactor, triangle))
+		e.b = clamp(e.b + r2noise(3*x+2, y, diffusionFactor, triangle))
+		e.a = clamp(e.a)
+
+		// Find the closest palette color in Euclidean R,G,B,A space:
+		// the one that minimizes sum-squared-difference.
+		bestIndex, bestSum := 0, uint32(1<<32-1)
+		for index, p := range palette {
+			sum := sqDiff(e.r, p.r) + sqDiff(e.g, p.g) + sqDiff(e.b, p.b) + sqDiff(e.a, p.a)
+			if sum < bestSum {
+				bestIndex, bestSum = index, sum
+				if sum == 0 {
+					break
+				}
+			}
+		}
+		pix[y*stride+x] = byte(bestIndex)
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"image/draw"
 	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
@@ -43,7 +44,10 @@ func main() {
 	die(err)
 
 	// Resize down
-	resizedImg := imaging.Resize(original, *width, 0, imaging.Lanczos)
+	resizedImg := original.(draw.Image)
+	if *width > 0 {
+		resizedImg = imaging.Resize(original, *width, 0, imaging.Lanczos)
+	}
 
 	pallettedImg := image.NewPaletted(resizedImg.Bounds(), cgaPalette)
 	// convert to linear color space
@@ -72,8 +76,10 @@ func main() {
 	pallettedImg.Palette = cgaPalette
 
 	// Resize to original
-	final := imaging.Resize(pallettedImg, original.Bounds().Dx(), original.Bounds().Dy(), imaging.NearestNeighbor)
-
+	var final image.Image = pallettedImg
+	if *width > 0 {
+		final = imaging.Resize(pallettedImg, original.Bounds().Dx(), original.Bounds().Dy(), imaging.NearestNeighbor)
+	}
 	// Save
 	fout, err := os.Create(*nameOut)
 	die(err)

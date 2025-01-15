@@ -4,67 +4,12 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
 	"io"
-	"math/rand"
 	"os"
 	"strings"
+
+	"github.com/earthboundkid/shitpic"
 )
-
-func recompress(in io.Reader, out io.Writer, quality int) error {
-	img, _, err := image.Decode(in)
-	if err != nil {
-		return err
-	}
-
-	return jpeg.Encode(out, img, &jpeg.Options{Quality: quality})
-}
-
-func gifize(in io.Reader, out io.Writer) error {
-	img, _, err := image.Decode(in)
-	if err != nil {
-		return err
-	}
-
-	return gif.Encode(out, img, nil)
-}
-
-func pngerate(in io.Reader, out io.Writer) error {
-	img, _, err := image.Decode(in)
-	if err != nil {
-		return err
-	}
-
-	return png.Encode(out, img)
-}
-
-func uglify(in io.Reader, cycles, lowerBound int) (io.Reader, error) {
-	randRange := 100 - lowerBound
-
-	var rbuf, wbuf bytes.Buffer
-
-	_, err := io.Copy(&rbuf, in)
-	if err != nil {
-		return nil, err
-	}
-
-	for i := 0; i < cycles; i++ {
-		fmt.Fprint(os.Stderr, ".")
-
-		quality := lowerBound + rand.Intn(randRange)
-		if err = recompress(&rbuf, &wbuf, quality); err != nil {
-			return nil, err
-		}
-		// Prevent allocations by reseting and swapping
-		rbuf.Reset()
-		rbuf, wbuf = wbuf, rbuf
-	}
-	fmt.Fprintln(os.Stderr)
-	return &rbuf, nil
-}
 
 func die(err error) {
 	if err != nil {
@@ -113,23 +58,27 @@ Shitpic accepts and can output JPEG, GIF, and PNG files.
 
 	if *reduceColor {
 		var buf bytes.Buffer
-		die(gifize(r, &buf))
+		die(shitpic.Gifize(r, &buf))
 		r = &buf
 	}
 
-	var err error
-	r, err = uglify(r, int(*cycles), *lowerBound)
+	b, err := io.ReadAll(r)
 	die(err)
 
+	b, err = shitpic.Uglify(b, nTimes(int(*cycles)), *lowerBound)
+	die(err)
+	fmt.Fprintln(os.Stderr)
+
+	r = bytes.NewBuffer(b)
 	if strings.HasSuffix(outfilename, ".png") {
 		var buf bytes.Buffer
-		die(pngerate(r, &buf))
+		die(shitpic.Pngerate(r, &buf))
 		r = &buf
 	}
 
 	if strings.HasSuffix(outfilename, ".gif") {
 		var buf bytes.Buffer
-		die(gifize(r, &buf))
+		die(shitpic.Gifize(r, &buf))
 		r = &buf
 	}
 
@@ -143,4 +92,12 @@ Shitpic accepts and can output JPEG, GIF, and PNG files.
 
 	_, err = io.Copy(outf, r)
 	die(err)
+}
+
+func nTimes(n int) func(func() bool) {
+	return func(yield func() bool) {
+		for i := 0; i < n && yield(); i++ {
+			fmt.Fprint(os.Stderr, ".")
+		}
+	}
 }

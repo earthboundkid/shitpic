@@ -1,4 +1,4 @@
-module github.com/carlmjohnson/shitpic
+module github.com/earthboundkid/shitpic
 
 go 1.23
 

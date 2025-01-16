@@ -4,6 +4,8 @@
     <meta charset="utf-8" />
     <title>SPEW: Shit PicturE Web</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="main.js" defer></script>
+    <script src="//unpkg.com/alpinejs" defer></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -55,34 +57,11 @@
       });
     </script>
   </head>
-  <body class="mx-auto p-8 max-w-screen-lg">
-    <input type="file" />
-    <img src="" class="max-w-[50vw] max-h-[50vh]" />
-    <script>
-      function downloadURI(uri, name) {
-        var link = document.createElement("a");
-        link.download = name;
-        link.href = uri;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        delete link;
-      }
-
-      document.querySelector("input").addEventListener("change", async (e) => {
-        let file = e.currentTarget.files[0];
-        let buf = new Uint8Array(await file.arrayBuffer());
-        console.log("starting");
-        let start = new Date();
-        let result = await uglify(buf);
-        console.log("done", new Date() - start);
-        document.querySelector("img").src = URL.createObjectURL(
-          new Blob([result.buffer], { type: "image/jpeg" }),
-        );
-      });
-      document.querySelector("img").addEventListener("click", (e) => {
-        downloadURI(e.currentTarget.src, "shitpic.jpeg");
-      });
-    </script>
+  <body class="mx-auto p-8 max-w-screen-lg" x-data>
+    <input type="file" @change="$uglify($event)" />
+    <img
+      src="" class="max-w-[50vw] max-h-[50vh]"
+      @click="$download($el.src, 'shitpic.jpeg')"
+    />
   </body>
 </html>

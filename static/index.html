@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="main.js" defer></script>
     <script src="//unpkg.com/alpinejs" defer></script>
+    <style>
+      .bg-houndstooth {
+        background-color: #ffffff;
+        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3Ehoundstooth%3C/title%3E%3Cg fill='%2355ffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 18h6l6-6v6h6l-6 6H0M24 18v6h-6M24 0l-6 6h-6l6-6M12 0v6L0 18v-6l6-6H0V0'/%3E%3C/g%3E%3C/svg%3E");
+      }
+    </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -57,19 +63,31 @@
       });
     </script>
   </head>
-  <body class="mx-auto p-8 max-w-screen-lg" x-data="shitpic">
-    <input type="file" x-ref="fileInput" @change="change" />
-    <div x-cloak x-show="isProcessing">Is Processing</div>
-    <div
-      class="text-red font-bold"
-      x-cloak
-      x-show="!!error"
-      x-text="error? error: ''"
-    ></div>
-    <img
-      :src="src"
-      class="max-w-[50vw] max-h-[50vh]"
-      @click="this.output? download(): $refs.fileInput.click()"
-    />
+  <body class="bg-houndstooth">
+    <div x-data="shitpic" class="flex flex-col gap-4 my-8 min-h-screen mx-auto max-w-screen-lg p-10 bg-slate-50 rounded shadow">
+      <h2 class="font-bold text-lg">Shitpic</h2>
+      <div class="flex items-center justify-start">
+        <label>
+          <input type="file" hidden x-ref="fileInput" @change="change" />
+          <div
+            class="flex w-28 h-9 px-2 flex-col bg-magenta rounded shadow text-white text-xs font-semibold leading-4 items-center justify-center cursor-pointer"
+          >
+            Choose Image
+          </div>
+        </label>
+      </div>
+
+      <div x-cloak x-show="isProcessing">Is Processing</div>
+      <div
+        class="text-red font-bold"
+        x-cloak
+        x-show="!!error"
+        x-text="error? error: ''"
+      ></div>
+
+      <a x-bind="downloadLink">
+        <img :src="src" class="max-w-full max-h-full" />
+      </a>
+    </div>
   </body>
 </html>

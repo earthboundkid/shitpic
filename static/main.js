@@ -56,8 +56,19 @@ function shitpic() {
         new Blob([this.output.buffer], { type: "image/jpeg" }),
       );
     },
-    download() {
-      downloadURI(this.output, "shitpic.jpeg");
+    downloadLink: {
+      [":download"]() {
+        return this.output ? "shitpic.jpeg" : null;
+      },
+      ["@click"]() {
+        if (this.output) {
+          return;
+        }
+        this.$refs.fileInput.click();
+      },
+      [":href"]() {
+        return this.output ? this.src : null;
+      },
     },
   };
 }

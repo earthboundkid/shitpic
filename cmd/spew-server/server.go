@@ -1,7 +1,16 @@
 package main
 
-import "net/http"
+import (
+	"log/slog"
+	"net/http"
+	"os"
+)
 
 func main() {
-	http.ListenAndServe(`:8080`, http.FileServer(http.Dir(`static`)))
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, nil)))
+	port := `:8080`
+	slog.Default().Info("init", "port", port)
+	mux := http.NewServeMux()
+	mux.Handle("/", http.FileServer(http.Dir(`static`)))
+	http.ListenAndServe(port, mux)
 }

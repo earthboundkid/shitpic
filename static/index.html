@@ -57,11 +57,19 @@
       });
     </script>
   </head>
-  <body class="mx-auto p-8 max-w-screen-lg" x-data>
-    <input type="file" @change="$uglify($event)" />
+  <body class="mx-auto p-8 max-w-screen-lg" x-data="shitpic">
+    <input type="file" x-ref="fileInput" @change="change" />
+    <div x-cloak x-show="isProcessing">Is Processing</div>
+    <div
+      class="text-red font-bold"
+      x-cloak
+      x-show="!!error"
+      x-text="error? error: ''"
+    ></div>
     <img
-      src="" class="max-w-[50vw] max-h-[50vh]"
-      @click="$download($el.src, 'shitpic.jpeg')"
+      :src="src"
+      class="max-w-[50vw] max-h-[50vh]"
+      @click="this.output? download(): $refs.fileInput.click()"
     />
   </body>
 </html>

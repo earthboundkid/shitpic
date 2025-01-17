@@ -51,6 +51,16 @@
       class="flex flex-col gap-4 my-8 min-h-screen mx-auto max-w-screen-lg p-10 bg-slate-50 rounded shadow"
     >
       <h2 class="font-bold text-lg">Shitpic</h2>
+
+      <label class="w-48 bg-white border-cyan border-4 rounded shadow">
+        <p class="font-bold">Quality</p>
+        <input class="w-full p-2" x-model.number="quality" />
+      </label>
+      <label class="w-48 bg-white border-cyan border-4 rounded shadow">
+        <p class="font-bold">Time</p>
+        <input class="w-full p-2" x-model.number="durationMS" />
+      </label>
+
       <div class="flex items-center justify-start">
         <label>
           <input type="file" hidden x-ref="fileInput" @change="change" />
@@ -67,7 +77,7 @@
         class="text-red font-bold"
         x-cloak
         x-show="!!error"
-        x-text="error? error: ''"
+        x-text="error? `Error: ${error}`: ''"
       ></div>
 
       <a x-bind="downloadLink">

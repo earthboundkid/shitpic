@@ -8,13 +8,15 @@ import (
 )
 
 func init() {
-	js.Global().Set("uglify", wrapUglify)
+	js.Global().Set("uglify", jsUglify)
 }
 
-var wrapUglify = goPromise(func(args []js.Value) (js.Value, bool) {
-	bufV := args[0]
+var jsUglify = goPromise(func(args []js.Value) (js.Value, bool) {
+	bufV, timeV, qualityV := args[0], args[1], args[2]
 	b := valueToBytes(bufV)
-	b, err := shitpic.Uglify(b, doFor(10*time.Second), 10)
+	d := time.Duration(timeV.Int()) * time.Millisecond
+	q := qualityV.Int()
+	b, err := shitpic.Uglify(b, doFor(d), q)
 	if err != nil {
 		return js.ValueOf(err.Error()), false
 	}

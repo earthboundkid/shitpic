@@ -14,12 +14,7 @@ const registerPromiseWorker = (callback) => {
 
     if (error) {
       console.error("Worker caught an error:", error);
-      postMessage([
-        messageId,
-        {
-          message: error.message,
-        },
-      ]);
+      postMessage([messageId, error]);
     } else {
       postMessage([messageId, null, result]);
     }

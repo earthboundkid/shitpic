@@ -21,7 +21,7 @@ registerPromiseWorker(async ([action, payload]) => {
       console.log("ponging", payload);
       return ["pong", payload];
     case "uglify":
-      return uglify(payload);
+      return uglify(...payload);
     default:
       throw `unknown action '${action}'`;
   }

@@ -37,7 +37,7 @@ class PromiseWorker {
     return new Promise((resolve, reject) => {
       this._callbacks[messageId] = (error, result) => {
         if (error) {
-          return reject(new Error(error.message));
+          return reject(error);
         }
         resolve(result);
       };

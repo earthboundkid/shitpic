@@ -24,19 +24,22 @@ function shitpic() {
     input: null,
     output: null,
     error: null,
+    durationMS: 5_000,
+    quality: 75,
 
     async process(file) {
       this.isProcessing = true;
       this.output = null;
+      this.error = null;
       console.log("starting");
       let start = new Date();
       try {
-        this.output = await promiseWorker
-          .postMessage(["uglify", this.input])
-      } catch (e) {
-        console.log("err", e);
-        this.error = e;
-        this.input = null;
+        this.output = await promiseWorker.postMessage([
+          "uglify",
+          [this.input, this.durationMS, this.quality],
+        ]);
+      } catch (err) {
+        this.error = err;
       }
       console.log("done", new Date() - start);
       this.isProcessing = false;

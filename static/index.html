@@ -10,6 +10,19 @@
         background-color: #ffffff;
         background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3Ehoundstooth%3C/title%3E%3Cg fill='%2355ffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 18h6l6-6v6h6l-6 6H0M24 18v6h-6M24 0l-6 6h-6l6-6M12 0v6L0 18v-6l6-6H0V0'/%3E%3C/g%3E%3C/svg%3E");
       }
+      .progress {
+        animation: progressBar var(--progress-time) ease-in-out;
+        animation-fill-mode: both;
+      }
+
+      @keyframes progressBar {
+        0% {
+          width: 0;
+        }
+        100% {
+          width: 100%;
+        }
+      }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -79,7 +92,27 @@
         </label>
       </div>
 
-      <div x-cloak x-show="isProcessing">Is Processing</div>
+      <div x-cloak x-show="isProcessing">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 20 20"
+          fill="currentColor"
+          class="size-5 animate-spin inline-block"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        Processing
+        <div
+          class="h-4 relative overflow-hidden bg-gray appearance-none"
+          :style="{ '--progress-time': `${durationMS}ms` }"
+        >
+          <span class="progress bg-magenta block h-full"></span>
+        </div>
+      </div>
       <div
         class="text-red font-bold"
         x-cloak

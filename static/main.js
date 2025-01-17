@@ -27,7 +27,7 @@ function shitpic() {
     durationMS: 5_000,
     quality: 75,
 
-    async process(file) {
+    async process() {
       this.isProcessing = true;
       this.output = null;
       this.error = null;
@@ -77,6 +77,23 @@ function shitpic() {
       [":href"]() {
         return this.output ? this.src : null;
       },
+    },
+    async pasteImage() {
+      try {
+        const clipboardContents = await navigator.clipboard.read();
+        console.log("read clipboard");
+        for (const item of clipboardContents) {
+          if (!item.types.includes("image/png")) {
+            this.error = "Clipboard does not contain image data.";
+            return;
+          }
+          let blob = await item.getType("image/png");
+          this.input = await blob.bytes();
+          await this.process();
+        }
+      } catch (error) {
+        this.error = error;
+      }
     },
   };
 }

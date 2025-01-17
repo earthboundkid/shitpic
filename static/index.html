@@ -61,6 +61,13 @@
         <input class="w-full p-2" x-model.number="durationMS" />
       </label>
 
+      <button
+        class="flex w-28 h-9 px-2 flex-col bg-magenta rounded shadow text-white text-xs font-semibold leading-4 items-center justify-center"
+        type="button"
+        @click="pasteImage"
+      >
+        Paste
+      </button>
       <div class="flex items-center justify-start">
         <label>
           <input type="file" hidden x-ref="fileInput" @change="change" />

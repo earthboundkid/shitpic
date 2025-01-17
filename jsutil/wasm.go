@@ -1,20 +1,15 @@
-package main
+package jsutil
 
 import (
 	"syscall/js"
 )
-
-func main() {
-	// Prevent the function from returning, which is required in a wasm module
-	select {}
-}
 
 var (
 	promise = js.Global().Get("Promise")
 	array   = js.Global().Get("Uint8Array")
 )
 
-func newPromise() (p js.Value, set, throw func(js.Value)) {
+func NewPromise() (p js.Value, set, throw func(js.Value)) {
 	type resultT struct {
 		v  js.Value
 		ok bool
@@ -33,7 +28,7 @@ func newPromise() (p js.Value, set, throw func(js.Value)) {
 			reject.Invoke(result.v)
 		}
 	}()
-	p = promise.New(js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+	p = promise.New(js.FuncOf(func(this js.Value, args []js.Value) any {
 		resolveCh <- resolveT{args[0], args[1]}
 		return nil
 	}))
@@ -46,9 +41,9 @@ func newPromise() (p js.Value, set, throw func(js.Value)) {
 	return
 }
 
-func goPromise(cb func(args []js.Value) (ret js.Value, ok bool)) js.Value {
-	f := js.FuncOf(func(this js.Value, args []js.Value) interface{} {
-		p, set, reject := newPromise()
+func AsyncFunc(cb func(args []js.Value) (ret js.Value, ok bool)) js.Value {
+	f := js.FuncOf(func(this js.Value, args []js.Value) any {
+		p, set, reject := NewPromise()
 		go func() {
 			if ret, ok := cb(args); ok {
 				set(ret)
@@ -61,17 +56,17 @@ func goPromise(cb func(args []js.Value) (ret js.Value, ok bool)) js.Value {
 	return f.Value
 }
 
-func await(awaitable js.Value) (ret js.Value, ok bool) {
+func Await(awaitable js.Value) (ret js.Value, ok bool) {
 	ch := make(chan struct{})
 	go func() {
 		awaitable.
-			Call("then", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			Call("then", js.FuncOf(func(this js.Value, args []js.Value) any {
 				ret = args[0]
 				ok = true
 				close(ch)
 				return nil
 			})).
-			Call("catch", js.FuncOf(func(this js.Value, args []js.Value) interface{} {
+			Call("catch", js.FuncOf(func(this js.Value, args []js.Value) any {
 				ret = args[0]
 				ok = false
 				close(ch)
@@ -82,13 +77,13 @@ func await(awaitable js.Value) (ret js.Value, ok bool) {
 	return
 }
 
-func bytesToValue(b []byte) js.Value {
+func BytesToValue(b []byte) js.Value {
 	v := array.New(js.ValueOf(len(b)))
 	js.CopyBytesToJS(v, b)
 	return v
 }
 
-func valueToBytes(v js.Value) []byte {
+func ValueToBytes(v js.Value) []byte {
 	size := v.Length()
 	b := make([]byte, size)
 	if n := js.CopyBytesToGo(b, v); n != size {

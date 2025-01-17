@@ -4,8 +4,7 @@
     <meta charset="utf-8" />
     <title>SPEW: Shit PicturE Web</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="main.js" defer></script>
-    <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="main.js" type="module"></script>
     <style>
       .bg-houndstooth {
         background-color: #ffffff;
@@ -45,26 +44,12 @@
         },
       };
     </script>
-    <script src="wasm_exec.js"></script>
-    <script>
-      if (!WebAssembly.instantiateStreaming) {
-        // polyfill
-        WebAssembly.instantiateStreaming = async (resp, importObject) => {
-          const source = await (await resp).arrayBuffer();
-          return await WebAssembly.instantiate(source, importObject);
-        };
-      }
-      const go = new Go();
-      WebAssembly.instantiateStreaming(
-        fetch("main.wasm"),
-        go.importObject,
-      ).then((result) => {
-        go.run(result.instance);
-      });
-    </script>
   </head>
   <body class="bg-houndstooth">
-    <div x-data="shitpic" class="flex flex-col gap-4 my-8 min-h-screen mx-auto max-w-screen-lg p-10 bg-slate-50 rounded shadow">
+    <div
+      x-data="shitpic"
+      class="flex flex-col gap-4 my-8 min-h-screen mx-auto max-w-screen-lg p-10 bg-slate-50 rounded shadow"
+    >
       <h2 class="font-bold text-lg">Shitpic</h2>
       <div class="flex items-center justify-start">
         <label>

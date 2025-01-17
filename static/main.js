@@ -1,12 +1,16 @@
-function downloadURI(uri, name) {
-  var link = document.createElement("a");
-  link.download = name;
-  link.href = uri;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  delete link;
-}
+import Alpine from "https://unpkg.com/alpinejs@3.14.8/dist/module.esm.min.js";
+import PromiseWorker from "./worker-promise-client.js";
+const promiseWorker = new PromiseWorker(new Worker("worker.js"));
+
+// Debug worker
+promiseWorker
+  .postMessage(["ping", 10])
+  .then((response) => {
+    console.log("got response", response);
+  })
+  .catch((error) => {
+    console.log("got error", error);
+  });
 
 const placeholderSVG = `
 <svg xmlns="http://www.w3.org/2000/svg" width="300" height="150" viewBox="0 0 300 150">
@@ -27,7 +31,8 @@ function shitpic() {
       console.log("starting");
       let start = new Date();
       try {
-        this.output = await window.uglify(this.input);
+        this.output = await promiseWorker
+          .postMessage(["uglify", this.input])
       } catch (e) {
         console.log("err", e);
         this.error = e;
@@ -73,6 +78,5 @@ function shitpic() {
   };
 }
 
-document.addEventListener("alpine:init", () => {
-  Alpine.data("shitpic", shitpic);
-});
+Alpine.data("shitpic", shitpic);
+Alpine.start();

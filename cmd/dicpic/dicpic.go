@@ -383,13 +383,11 @@ func triangleWave(z float64) float64 {
 	return 2 - 2*z
 }
 
-func r2noise(x, y int, errorFactor float64, triangle bool) int32 {
-	z := r2intensity(x, y)
-	if triangle {
-		z = triangleWave(z)
-	}
-	z = 0xffff*z - 0x7FFF
-	return int32(z * errorFactor)
+func skew(a, b int32, bias float64) int32 {
+	a1, b1 := float64(a), float64(b)
+	a1 = a1 * (1 - bias)
+	b1 = b1 * bias
+	return clamp(int32(a1) + int32(b1))
 }
 
 func drawNoisy(dst *image.Paletted, r image.Rectangle, src image.Image, diffusionFactor float64, triangle bool) {
@@ -424,10 +422,16 @@ func drawNoisy(dst *image.Paletted, r image.Rectangle, src image.Image, diffusio
 		var e diffusion
 		e.r, e.g, e.b, e.a = int32(sr), int32(sg), int32(sb), int32(sa)
 
-		e.r = clamp(e.r + r2noise(3*x+0, y, diffusionFactor, triangle))
-		e.g = clamp(e.g + r2noise(3*x+1, y, diffusionFactor, triangle))
-		e.b = clamp(e.b + r2noise(3*x+2, y, diffusionFactor, triangle))
-		e.a = clamp(e.a)
+		z := r2intensity(x, y)
+		if triangle {
+			z = triangleWave(z)
+		}
+		paletteChoice := palette[int(z*float64(len(palette)))%len(palette)]
+
+		e.r = skew(e.r, paletteChoice.r, diffusionFactor)
+		e.g = skew(e.g, paletteChoice.g, diffusionFactor)
+		e.b = skew(e.b, paletteChoice.b, diffusionFactor)
+		e.a = skew(e.a, paletteChoice.a, diffusionFactor)
 
 		// Find the closest palette color in Euclidean R,G,B,A space:
 		// the one that minimizes sum-squared-difference.

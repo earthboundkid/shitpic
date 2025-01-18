@@ -1,0 +1,6 @@
+[build]
+command = "./build.sh"
+publish = "static"
+
+[build.environment]
+TZ = "America/New_York"

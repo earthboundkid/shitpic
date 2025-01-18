@@ -30,7 +30,6 @@ function shitpic() {
 
     async process() {
       this.isProcessing = true;
-      this.output = null;
       this.error = null;
       console.log("starting");
       let start = new Date();
@@ -77,8 +76,8 @@ function shitpic() {
     async copyImage() {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
-      canvas.width = this.$refs.outputImg.width;
-      canvas.height = this.$refs.outputImg.height;
+      canvas.width = this.$refs.outputImg.naturalWidth;
+      canvas.height = this.$refs.outputImg.naturalHeight;
       ctx.drawImage(this.$refs.outputImg, 0, 0);
       canvas.toBlob(async (blob) => {
         await navigator.clipboard.write([
@@ -98,7 +97,13 @@ function shitpic() {
             continue;
           }
           let blob = await item.getType("image/png");
-          this.input = await blob.bytes();
+          if ("bytes" in blob) {
+            this.input = await blob.bytes();
+          } else {
+            // Chrome doesn't give us .bytes() for some reason.
+            let buf = await blob.arrayBuffer();
+            this.input = new Uint8Array(buf);
+          }
           await this.process();
           return;
         }

@@ -2,25 +2,24 @@ package shitpic
 
 import (
 	"bytes"
-	"image"
 	"image/gif"
-	"image/jpeg"
 	"image/png"
 	"io"
 	"math/rand/v2"
+
+	"github.com/disintegration/imaging"
 )
 
 func Recompress(in io.Reader, out io.Writer, quality int) error {
-	img, _, err := image.Decode(in)
+	img, err := imaging.Decode(in, imaging.AutoOrientation(true))
 	if err != nil {
 		return err
 	}
-
-	return jpeg.Encode(out, img, &jpeg.Options{Quality: quality})
+	return imaging.Encode(out, img, imaging.JPEG, imaging.JPEGQuality(quality))
 }
 
 func Gifize(in io.Reader, out io.Writer) error {
-	img, _, err := image.Decode(in)
+	img, err := imaging.Decode(in, imaging.AutoOrientation(true))
 	if err != nil {
 		return err
 	}
@@ -29,7 +28,7 @@ func Gifize(in io.Reader, out io.Writer) error {
 }
 
 func Pngerate(in io.Reader, out io.Writer) error {
-	img, _, err := image.Decode(in)
+	img, err := imaging.Decode(in, imaging.AutoOrientation(true))
 	if err != nil {
 		return err
 	}

@@ -26,6 +26,7 @@ function shitpic() {
     error: null,
     durationMS: 5_000,
     quality: 75,
+    didCopy: null,
 
     async process() {
       this.isProcessing = true;
@@ -55,7 +56,16 @@ function shitpic() {
       this.input = buf;
       await this.process();
     },
-    get src() {
+    get inputSrc() {
+      if (!this.input) {
+        const encoded = encodeURIComponent(placeholderSVG);
+        return `data:image/svg+xml;charset=UTF-8,${encoded}`;
+      }
+      return URL.createObjectURL(
+        new Blob([this.input.buffer], { type: "image/png" }),
+      );
+    },
+    get outputSrc() {
       if (!this.output) {
         const encoded = encodeURIComponent(placeholderSVG);
         return `data:image/svg+xml;charset=UTF-8,${encoded}`;
@@ -64,33 +74,36 @@ function shitpic() {
         new Blob([this.output.buffer], { type: "image/jpeg" }),
       );
     },
-    downloadLink: {
-      [":download"]() {
-        return this.output ? "shitpic.jpeg" : null;
-      },
-      ["@click"]() {
-        if (this.output) {
-          return;
-        }
-        this.$refs.fileInput.click();
-      },
-      [":href"]() {
-        return this.output ? this.src : null;
-      },
+    async copyImage() {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = this.$refs.outputImg.width;
+      canvas.height = this.$refs.outputImg.height;
+      ctx.drawImage(this.$refs.outputImg, 0, 0);
+      canvas.toBlob(async (blob) => {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob }),
+        ]);
+        clearTimeout(this.didCopy);
+        this.didCopy = setTimeout(() => {
+          this.didCopy = null;
+        }, 1_000);
+      });
     },
     async pasteImage() {
       try {
         const clipboardContents = await navigator.clipboard.read();
-        console.log("read clipboard");
         for (const item of clipboardContents) {
           if (!item.types.includes("image/png")) {
-            this.error = "Clipboard does not contain image data.";
-            return;
+            continue;
           }
           let blob = await item.getType("image/png");
           this.input = await blob.bytes();
           await this.process();
+          return;
         }
+        this.error = "Clipboard does not contain image data.";
+        return;
       } catch (error) {
         this.error = error;
       }

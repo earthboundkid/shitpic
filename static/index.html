@@ -5,25 +5,7 @@
     <title>SPEW: Shit PicturE Web</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="main.js" type="module"></script>
-    <style>
-      .bg-houndstooth {
-        background-color: #ffffff;
-        background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ctitle%3Ehoundstooth%3C/title%3E%3Cg fill='%2355ffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 18h6l6-6v6h6l-6 6H0M24 18v6h-6M24 0l-6 6h-6l6-6M12 0v6L0 18v-6l6-6H0V0'/%3E%3C/g%3E%3C/svg%3E");
-      }
-      .progress {
-        animation: progressBar var(--progress-time) ease-in-out;
-        animation-fill-mode: both;
-      }
-
-      @keyframes progressBar {
-        0% {
-          width: 0;
-        }
-        100% {
-          width: 100%;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -58,7 +40,7 @@
       };
     </script>
   </head>
-  <body class="bg-houndstooth">
+  <body class="bg-dots font-pixel text-black text-xs">
     <div
       x-data="shitpic"
       class="flex flex-col gap-4 my-8 min-h-screen mx-auto max-w-screen-lg p-10 bg-slate-50 rounded shadow"
@@ -66,13 +48,13 @@
       <h2 class="font-bold text-lg">Shitpic</h2>
 
       <div class="flex flex-wrap gap-4">
-        <label class="w-48 bg-white border-cyan border-4 rounded shadow">
-          <p class="font-bold">Quality</p>
-          <input class="w-full p-2" x-model.number="quality" />
+        <label class="p-4 w-48 bg-cyan hover:bg-cyan-dark rounded shadow">
+          <p class="">Quality</p>
+          <input class="w-full p-2 bg-transparent" x-model.number="quality" />
         </label>
-        <label class="w-48 bg-white border-cyan border-4 rounded shadow">
-          <p class="font-bold">Time</p>
-          <input class="w-full p-2" x-model.number="durationMS" />
+        <label class="p-4 w-48 bg-cyan hover:bg-cyan-dark rounded shadow">
+          <p class="">Time</p>
+          <input class="w-full p-2 bg-transparent" x-model.number="durationMS" />
         </label>
       </div>
 
@@ -111,14 +93,14 @@
               <label>
                 <input type="file" hidden x-ref="fileInput" @change="change" />
                 <div
-                  class="flex w-28 h-9 px-2 flex-col bg-magenta rounded shadow text-white text-xs font-semibold leading-4 items-center justify-center cursor-pointer"
+                  class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
                 >
                   Choose Image
                 </div>
               </label>
             </div>
             <button
-              class="flex w-28 h-9 px-2 flex-col bg-magenta rounded shadow text-white text-xs font-semibold leading-4 items-center justify-center"
+              class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
               type="button"
               @click="pasteImage"
             >
@@ -133,7 +115,7 @@
           <h3 class="font-bold">Shit pic</h3>
           <div class="flex flex-wrap gap-4" x-show="!! output">
             <button
-              class="flex w-28 h-9 px-2 flex-col bg-magenta rounded shadow text-white text-xs font-semibold leading-4 items-center justify-center"
+              class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
               type="button"
               @click="copyImage"
             >
@@ -141,15 +123,19 @@
               <span x-show="!! didCopy" x-cloak>Copied ✅</span>
             </button>
             <a
-              class="flex w-28 h-9 px-2 flex-col bg-magenta rounded shadow text-white text-xs font-semibold leading-4 items-center justify-center"
+              class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
               download="shitpic.jpeg"
               :href="outputSrc"
             >
               Download
             </a>
           </div>
-          <a download="shitpic.jpeg" :href="outputSrc">
-            <img :src="outputSrc" x-ref="outputImg" class="max-w-full max-h-[50vh]" />
+          <a target="_blank" :href="outputSrc">
+            <img
+              :src="outputSrc"
+              x-ref="outputImg"
+              class="max-w-full max-h-[50vh]"
+            />
           </a>
         </div>
       </div>

@@ -21,6 +21,8 @@ const placeholderSVG = `
 function shitpic() {
   return {
     isProcessing: false,
+    files: [],
+    fileID: 0,
     input: null,
     output: null,
     error: null,
@@ -28,7 +30,7 @@ function shitpic() {
     quality: 75,
     didCopy: null,
 
-    async process() {
+    async uglify() {
       this.isProcessing = true;
       this.error = null;
       console.log("starting");
@@ -38,6 +40,7 @@ function shitpic() {
           "uglify",
           [this.input, this.durationMS, this.quality],
         ]);
+        this.files.push({ id: this.fileID++, src: this.output });
       } catch (err) {
         this.error = err;
       }
@@ -48,30 +51,28 @@ function shitpic() {
       let file = this.$refs.fileInput.files[0];
       if (!file) {
         this.input = null;
-        this.output = null;
         return;
       }
       let buf = new Uint8Array(await file.arrayBuffer());
       this.input = buf;
-      await this.process();
+      this.files.push({ id: this.fileID++, src: this.input });
+    },
+    asSrc(buf) {
+      return URL.createObjectURL(new Blob([buf]));
     },
     get inputSrc() {
       if (!this.input) {
         const encoded = encodeURIComponent(placeholderSVG);
         return `data:image/svg+xml;charset=UTF-8,${encoded}`;
       }
-      return URL.createObjectURL(
-        new Blob([this.input.buffer], { type: "image/png" }),
-      );
+      return this.asSrc(this.input.buffer);
     },
     get outputSrc() {
       if (!this.output) {
         const encoded = encodeURIComponent(placeholderSVG);
         return `data:image/svg+xml;charset=UTF-8,${encoded}`;
       }
-      return URL.createObjectURL(
-        new Blob([this.output.buffer], { type: "image/jpeg" }),
-      );
+      return this.asSrc(this.output);
     },
     async copyImage() {
       const canvas = document.createElement("canvas");
@@ -104,7 +105,7 @@ function shitpic() {
             let buf = await blob.arrayBuffer();
             this.input = new Uint8Array(buf);
           }
-          await this.process();
+          this.files.push({ id: this.fileID++, src: this.input });
           return;
         }
         this.error = "Clipboard does not contain image data.";

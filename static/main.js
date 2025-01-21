@@ -23,12 +23,19 @@ function shitpic() {
     isProcessing: false,
     files: [],
     fileID: 0,
-    input: null,
-    output: null,
+    currentImg: null,
+    previousImg: null,
     error: null,
     durationMS: 5_000,
     quality: 75,
     didCopy: null,
+
+    addFile(file) {
+      let obj = { id: ++this.fileID, data: file };
+      this.files.unshift(obj);
+      this.previousImg = this.currentImg;
+      this.currentImg = obj;
+    },
 
     async uglify() {
       this.isProcessing = true;
@@ -36,11 +43,11 @@ function shitpic() {
       console.log("starting");
       let start = new Date();
       try {
-        this.output = await promiseWorker.postMessage([
+        let output = await promiseWorker.postMessage([
           "uglify",
-          [this.input, this.durationMS, this.quality],
+          [this.currentImg.data, this.durationMS, this.quality],
         ]);
-        this.files.push({ id: this.fileID++, src: this.output });
+        this.addFile(output);
       } catch (err) {
         this.error = err;
       }
@@ -54,41 +61,40 @@ function shitpic() {
         return;
       }
       let buf = new Uint8Array(await file.arrayBuffer());
-      this.input = buf;
-      this.files.push({ id: this.fileID++, src: this.input });
+      this.addFile(buf);
     },
     asSrc(buf) {
       return URL.createObjectURL(new Blob([buf]));
     },
-    get inputSrc() {
-      if (!this.input) {
+    get currentSrc() {
+      if (!this.currentImg) {
         const encoded = encodeURIComponent(placeholderSVG);
         return `data:image/svg+xml;charset=UTF-8,${encoded}`;
       }
-      return this.asSrc(this.input.buffer);
+      return this.asSrc(this.currentImg.data);
     },
-    get outputSrc() {
-      if (!this.output) {
-        const encoded = encodeURIComponent(placeholderSVG);
-        return `data:image/svg+xml;charset=UTF-8,${encoded}`;
-      }
-      return this.asSrc(this.output);
+    get previousSrc() {
+      return this.previousImg ? this.asSrc(this.previousImg.data) : "";
     },
-    async copyImage() {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      canvas.width = this.$refs.outputImg.naturalWidth;
-      canvas.height = this.$refs.outputImg.naturalHeight;
-      ctx.drawImage(this.$refs.outputImg, 0, 0);
-      canvas.toBlob(async (blob) => {
-        await navigator.clipboard.write([
-          new ClipboardItem({ "image/png": blob }),
-        ]);
-        clearTimeout(this.didCopy);
-        this.didCopy = setTimeout(() => {
-          this.didCopy = null;
-        }, 1_000);
-      });
+    async copyImage(src) {
+      let img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(async (blob) => {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob }),
+          ]);
+          clearTimeout(this.didCopy);
+          this.didCopy = setTimeout(() => {
+            this.didCopy = null;
+          }, 1_000);
+        });
+      };
+      img.src = src;
     },
     async pasteImage() {
       try {
@@ -98,14 +104,15 @@ function shitpic() {
             continue;
           }
           let blob = await item.getType("image/png");
+          let file;
           if ("bytes" in blob) {
-            this.input = await blob.bytes();
+            file = await blob.bytes();
           } else {
             // Chrome doesn't give us .bytes() for some reason.
             let buf = await blob.arrayBuffer();
-            this.input = new Uint8Array(buf);
+            file = new Uint8Array(buf);
           }
-          this.files.push({ id: this.fileID++, src: this.input });
+          this.addFile(file);
           return;
         }
         this.error = "Clipboard does not contain image data.";

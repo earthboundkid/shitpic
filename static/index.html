@@ -47,36 +47,15 @@
     >
       <h2 class="font-bold text-lg">Shitpic</h2>
       <ul class="flex gap-4 overflow-x-scroll leading-loose">
-        <template x-for="file in files.toReversed()" :key="file.id">
+        <template x-for="file in files" :key="file.id">
           <li class="flex-none w-24 bg-magenta rounded shadow">
-            <span class="m-2" x-text="`#${file.id+1}`"></span>
-            <button type="button" @click="input = file.src">
-              <img :src="asSrc(file.src)" />
+            <span class="m-2" x-text="`#${file.id}`"></span>
+            <button type="button" @click="previousImg = currentImg; currentImg = file">
+              <img :src="asSrc(file.data)" />
             </button>
           </li>
         </template>
       </ul>
-      <div class="flex flex-wrap gap-4">
-        <label class="p-4 w-48 bg-cyan hover:bg-cyan-dark rounded shadow">
-          <p class="">Quality</p>
-          <input class="w-full p-2 bg-transparent" x-model.number="quality" />
-        </label>
-        <label class="p-4 w-48 bg-cyan hover:bg-cyan-dark rounded shadow">
-          <p class="">Time</p>
-          <input
-            class="w-full p-2 bg-transparent"
-            x-model.number="durationMS"
-          />
-        </label>
-        <button
-          x-show="input"
-          class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
-          type="button"
-          @click="uglify"
-        >
-          Uglify
-        </button>
-      </div>
 
       <div x-cloak x-show="isProcessing">
         <svg
@@ -105,39 +84,43 @@
         x-show="!!error"
         x-text="error? `Error: ${error}`: ''"
       ></div>
-      <div class="flex flex-wrap justify-between items-end gap-4">
-        <div class="flex-1 flex flex-col gap-2">
-          <h3 class="font-bold">Source</h3>
-          <div class="flex flex-wrap gap-4">
-            <div class="flex items-center justify-start">
-              <label>
-                <input type="file" hidden x-ref="fileInput" @change="change" />
-                <div
-                  class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
-                >
-                  Choose Image
-                </div>
-              </label>
-            </div>
-            <button
+
+      <div class="flex flex-wrap gap-4">
+        <div class="flex items-center justify-start">
+          <label>
+            <input type="file" hidden x-ref="fileInput" @change="change" />
+            <div
               class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
-              type="button"
-              @click="pasteImage"
             >
-              Paste
-            </button>
-          </div>
-          <a :href="inputSrc" target="_blank">
-            <img :src="inputSrc" class="max-w-full max-h-[50vh]" />
-          </a>
+              Choose File
+            </div>
+          </label>
         </div>
-        <div class="flex-1 flex flex-col gap-2">
-          <h3 class="font-bold">Shit pic</h3>
-          <div class="flex flex-wrap gap-4" x-show="!! output">
+        <button
+          class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
+          type="button"
+          @click="pasteImage"
+        >
+          Paste
+        </button>
+      </div>
+
+      <div class="flex flex-wrap justify-between items-start gap-4">
+        <div class="flex-1 flex flex-col gap-4">
+          <h3 class="font-bold">
+            Current image
+            <span x-show="currentImg">
+              (#<span x-text="currentImg?.id"></span>)
+            </span>
+          </h3>
+          <a :href="currentSrc" target="_blank">
+            <img :src="currentSrc" class="max-w-full max-h-[50vh]" />
+          </a>
+          <div class="flex flex-wrap gap-4" x-show="!! currentImg">
             <button
               class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
               type="button"
-              @click="copyImage"
+              @click="copyImage(asSrc(currentImg.data))"
             >
               <span x-show="! didCopy">Copy</span>
               <span x-show="!! didCopy" x-cloak>Copied ✅</span>
@@ -145,20 +128,46 @@
             <a
               class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
               download="shitpic.jpeg"
-              :href="outputSrc"
+              :href="currentSrc"
             >
               Download
             </a>
           </div>
-          <a target="_blank" :href="outputSrc">
-            <img
-              :src="outputSrc"
-              x-ref="outputImg"
-              class="max-w-full max-h-[50vh]"
-            />
+        </div>
+        <div class="flex-1 flex flex-col gap-4">
+          <h3 class="font-bold" x-show="previousImg" x-cloak>
+            Previous image (#<span x-text="previousImg?.id"></span>)
+          </h3>
+
+          <a target="_blank" :href="previousSrc">
+            <img :src="previousSrc" class="max-w-full max-h-[50vh]" />
           </a>
         </div>
       </div>
+
+      <div class="flex flex-wrap gap-4 items-start">
+        <button
+          x-show="currentImg"
+          class="flex h-12 py-2 px-4 flex-col bg-magenta rounded shadow text-white text-xs items-center justify-center hover:bg-magenta-dark"
+          type="button"
+          @click="uglify"
+        >
+          Uglify
+        </button>
+
+        <label class="p-4 w-48 bg-cyan hover:bg-cyan-dark rounded shadow">
+          <p class="">Quality</p>
+          <input class="w-full p-2 bg-transparent" x-model.number="quality" />
+        </label>
+        <label class="p-4 w-48 bg-cyan hover:bg-cyan-dark rounded shadow">
+          <p class="">Time</p>
+          <input
+            class="w-full p-2 bg-transparent"
+            x-model.number="durationMS"
+          />
+        </label>
+      </div>
+
     </div>
   </body>
 </html>
